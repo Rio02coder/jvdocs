@@ -1,0 +1,98 @@
+# Custom Interact Action
+
+You can create your custom actions for your agent. This example shows how to create an interact action.
+
+This example assumes that an agent exists in the daf folder (under jivas or anonymous sub-folder)
+
+## Getting the Custom Action boiler plate
+
+To get a boiler plate code for the custom interact action, run the following command:
+
+```sh
+jvcli create action --name <action_name> --type interact_action
+```
+
+Note that the action_name must be in snake case and all characters must be in lower case
+This will create the interact action with all defaults in place. However, we can customize the parameters this command offers and create other kinds of actions. For a full list run the following command
+
+```sh
+jvcli create action --help
+```
+
+Once, the action is created, it appear under the following folder.
+
+```sh
+actions/anonymous/<action_name>
+```
+
+## Bug Fix
+
+In the current version of Jivas, the action file under the folder has a line at the top reading:
+
+```sh
+import:jac from agent.action.interact_action { InteractAction }
+```
+
+you should change that to
+
+```sh
+import:jac from jivas.agent.action.interact_action { InteractAction }
+```
+
+## Boiler plate methods
+
+The boiler plate code generated has some methods that are meant to be overridden.
+Of these methods the most important are the following
+
+- on_enable : This ability is ran when the action is enabled.
+- on_register : This ability is ran when the action is registered.
+- execute: This is the ability that the interact_graph_walker visits when it reaches this action node and should be overriden.
+
+### Execute ability
+
+The execute ability is probably the most interesting of them all.
+What goes into this ability is completely dependent on the action's purpose. However, below there are some commonly used features to interact with the interact_graph_walker.
+
+- The interact_graph_walker holds the user's prompt as part of its parameters.
+- It can also hold files/other details in its data parameter and is retrievable thorugh the
+
+```sh
+<interact_graph_walker>.interaction_node.get_data_items();
+```
+
+- Additionally, to store intermediate result, we can store it in the following way:
+
+```sh
+<interact_graph_walker>.context_data[<key_name>] = <value>
+```
+
+## Action parameters
+
+The action that is created can have parameters and the way we setup these parameters is by setting their values in the descriptor.yaml file of the agent this action is tied to.
+
+In the descriptor.yaml of the agent we setup the function as follows:
+
+```sh
+- action: anonymous/<action_name>
+    context:
+      version: "0.0.1"
+      enabled: true
+      <param_1>: <value_1>
+      <param_2>: <value_2>
+```
+
+## Other Action methods
+
+Most of the time there can be other action methods for the interact action (or any other type) of action. In that event, we write them in the action file itself.
+
+## Action Walkers
+
+Sometimes, we just want to test our action in isolation. To do so, we have to write action walkers that inherit the interact_graph_walker. To do so, we simply write these walkers in the action's folder and include them in the file called lib.jac present inside the action folder.
+
+To access these walkers we need to utilize the
+
+```sh
+/action/walker
+```
+
+endpoint. We need to pass the arguments this walker expects using the args param, any files it expects using the files param, the walker name, module root (The folder where the walker resides)
